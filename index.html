@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Pronóstico del Tiempo en Oropesa del Mar</title>
+    <link rel="stylesheet" href="style.css" />
   </head>
   <body>
     <div id="tiempo">
@@ -11,8 +12,9 @@
     </div>
 
     <script>
-      const url =
-        'https://www.el-tiempo.net/api/json/v2/provincias/12/municipios/12085'
+      const apiKey = 'fdbfecbdd65e5fa60d047c6f54918a37' // Reemplaza con tu clave API válida
+      const ciudad = 'Oropesa,ES' // Ciudad en formato correcto
+      const url = `https://api.openweathermap.org/data/2.5/forecast?q=${ciudad}&appid=${apiKey}&units=metric&lang=es`
 
       fetch(url)
         .then((response) => {
@@ -35,13 +37,22 @@
         const tiempoDiv = document.getElementById('tiempo')
         tiempoDiv.innerHTML = ''
 
-        const hoy = data.pronostico.hoy
-        const { salidaSol, puestaSol } = data
+        const hoy = data.list[0]
+        const { sunrise, sunset } = data.city
+        // Convertir las horas de salida y puesta del sol a formato legible
+        const horaSalidaSol = new Date(sunrise * 1000).toLocaleTimeString(
+          'es-ES',
+          { hour: '2-digit', minute: '2-digit' }
+        )
+        const horaPuestaSol = new Date(sunset * 1000).toLocaleTimeString(
+          'es-ES',
+          { hour: '2-digit', minute: '2-digit' }
+        )
 
-        // Primer bloque: Temperatura grande y nombre de la ciudad
+        /// Primer bloque: Temperatura grande y nombre de la ciudad
         tiempoDiv.innerHTML += `
         <div class="bloque head">
-            <div class="temperatura-grande">${hoy.temperatura_actual}°</div>
+            <div class="temperatura-grande">${Math.round(hoy.main.temp)}°</div>
             <div class="ciudad">Oropesa del Mar</div>
         </div>
     `
@@ -51,42 +62,76 @@
         <div class="bloque">
             <div class="columna">
                 <p>Salida del sol</p>
-                <p>${salidaSol}</p>
+                <p>${horaSalidaSol}</p>
             </div>
             <div class="columna">
                 <p>Puesta del sol</p>
-                <p>${puestaSol}</p>
+                <p>${horaPuestaSol}</p>
             </div>
         </div>
     `
-
-        // Tercer bloque: Pronóstico por hora (cada 3 horas)
+        // Segundo bloque: Pronóstico por hora (cada 3 horas)
         const horasDiv = document.createElement('div')
         horasDiv.className = 'bloque'
 
-        hoy.pronostico_horario.forEach((item, index) => {
-          horasDiv.innerHTML += `
+        const horaActual = new Date().getHours()
+        const indiceInicial = data.list.findIndex((item) => {
+          const horaPronostico = new Date(item.dt * 1000).getHours()
+          const diferenciaHoras = (horaPronostico - horaActual + 24) % 24
+          return diferenciaHoras < 3
+        })
+
+        // Obtenemos las próximas 5 lecturas (cada 3 horas) de la API
+        data.list
+          .slice(indiceInicial, indiceInicial + 5)
+          .forEach((item, index) => {
+            const fecha = new Date(item.dt * 1000)
+            console.log(`Forecast ${index + 1}:`, fecha)
+            const horaStr = `${fecha.getHours() % 12 || 12}${
+              fecha.getHours() < 12 ? 'am' : 'pm'
+            }`
+            horasDiv.innerHTML += `
       <div class="columna">
-        <h3 class="hora">${item.hora}</h3>
-        <img src="https://www.el-tiempo.net/assets/api/icons/${item.icono}.svg" alt="Icono del tiempo">
-        <p>${item.temperatura} °C</p>
+        <h3 class="hora">${horaStr}</h3>
+        <img src="https://openweathermap.org/img/wn/${
+          item.weather[0].icon
+        }@2x.png" alt="Icono del tiempo">
+        <p>${Math.round(item.main.temp)} °C</p>
       </div>
     `
-        })
+          })
         tiempoDiv.appendChild(horasDiv)
 
-        // Cuarto bloque: Pronóstico por día (mañana)
-        const manana = data.pronostico.manana
+        // Tercer bloque: Pronóstico por día (solo muestra los días disponibles en el pronóstico de 5 días)
         const diasDiv = document.createElement('div')
         diasDiv.className = 'bloque'
 
-        diasDiv.innerHTML += `
+        // Obtenemos los días disponibles en el pronóstico
+        const dias = []
+        data.list.forEach((item, index) => {
+          if (index % 8 === 0) {
+            // 8 entradas de 3 horas = 24 horas
+            const fecha = new Date(item.dt * 1000)
+            const diaAbreviado = fecha.toLocaleDateString('es-ES', {
+              weekday: 'short',
+            })
+            dias.push({
+              diaAbreviado,
+              icono: `https://openweathermap.org/img/wn/${item.weather[0].icon}@2x.png`,
+              temp: Math.round(item.main.temp),
+            })
+          }
+        })
+
+        dias.forEach((dia) => {
+          diasDiv.innerHTML += `
                     <div class="columna dia">
-                        <h3>Mañana</h3>
-                        <img src="https://www.el-tiempo.net/assets/api/icons/${manana.icono}.svg" alt="Icono del tiempo">
-                        <p>${manana.temperatura_max}°C / ${manana.temperatura_min}°C</p>
+                        <h3>${dia.diaAbreviado}</h3>
+                        <img src="${dia.icono}" alt="Icono del tiempo">
+                        <p>${dia.temp} °C</p>
                     </div>
                 `
+        })
         tiempoDiv.appendChild(diasDiv)
       }
     </script>
