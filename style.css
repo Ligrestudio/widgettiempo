@@ -32,5 +32,65 @@ p {
   text-wrap: pretty;
 }
 /*STYLES*/
+
+@font-face {
+  font-family: 'ppneuemontreal';
+  src: url('/fonts/ppneuemontreal-medium.ttf') format('ttf');
+  font-weight: 100 900;
+  font-style: medium;
+  unicode-range: U+0000-017F, U+02B8-0368, U+2000-20CF, U+2150-217F, U+2190-21BB;
+  font-display: auto;
+}
+
 body {
-  padding: 1rem;
+  font-family: 'ppneuemontreal', 'helvetica', sans-serif;
+  font-style: medium;
+  color: #fff;
+  background-color: #000;
+  margin: 0;
+  padding: 0;
+}
+#tiempo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px;
+}
+.bloque {
+  margin-bottom: 24px;
+  text-align: center;
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+}
+.head {
+  flex-direction: column;
+  margin-bottom: 6rem;
+}
+.temperatura-grande {
+  font-size: 15rem;
+  margin: 0;
+}
+.ciudad {
+  font-size: 2em;
+  margin: 0;
+}
+.columna,
+.dia {
+  padding: 8px;
+  margin: 4px;
+  text-align: center;
+  min-width: 0;
+}
+.columna img {
+  width: 56px;
+  height: 56px;
+}
+.columna p,
+.columna h3 {
+  margin: 0;
+}
+.info-marin {
+  margin: 2rem 0;
+}
